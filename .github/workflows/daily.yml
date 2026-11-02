@@ -1,0 +1,27 @@
+name: Daily Projects
+
+on:
+  schedule:
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Fetch projects
+        run: python daily_projects.py --no-open
+      - name: Save report
+        run: |
+          git config user.name "project-bot"
+          git config user.email "project-bot@users.noreply.github.com"
+          git add docs seen.json
+          git commit -m "daily update" || echo "nothing to commit"
+          git push
