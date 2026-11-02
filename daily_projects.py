@@ -70,12 +70,25 @@ def src_remoteok():
 
 def src_wwr():
     out = []
-    for cat in ("remote-design-jobs", "remote-marketing-jobs", "remote-copywriting-jobs", "remote-front-end-programming-jobs"):
-        root = ET.fromstring(get(f"https://weworkremotely.com/categories/{cat}.rss"))
+    feeds = ["https://weworkremotely.com/remote-jobs.rss"] + [
+        f"https://weworkremotely.com/categories/{c}.rss" for c in (
+            "remote-design-jobs", "remote-sales-and-marketing-jobs",
+            "remote-front-end-programming-jobs", "remote-full-stack-programming-jobs",
+            "all-other-remote-jobs")]
+    fails = 0
+    for url in feeds:
+        try:
+            root = ET.fromstring(get(url))
+        except Exception as ex:
+            fails += 1
+            print("WARN wwr feed fail:", url.split("/")[-1], ex)
+            continue
         for it in root.iter("item"):
             g = lambda k: (it.findtext(k) or "")
             out.append(dict(id="ww" + g("guid"), title=g("title"), company="", url=g("link"),
                             desc=strip(g("description"))[:300], when=g("pubDate"), source="WeWorkRemotely"))
+    if fails == len(feeds):
+        raise RuntimeError("sab WeWorkRemotely feeds fail hue")
     return out
 
 
